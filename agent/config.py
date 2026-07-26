@@ -11,7 +11,6 @@ class Config:
     TEMPERATURE: float = 0.3
     MAX_TOKENS: int = 2000
     
-    # Mapeo de archivos a categorías
     DOCUMENT_MAPPING = {
         "01_Reglamento_del_Estudiante": "Reglamento del Estudiante",
         "02_Politica_de_Reembolso_de_Matriculas": "Política de Reembolso",

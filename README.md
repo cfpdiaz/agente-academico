@@ -2,6 +2,7 @@
 
 Agente de inteligencia artificial para consultas sobre matrículas, horarios, becas, plataforma y reglamento estudiantil.
 Agente desplegado en la siguiente URL: https://agente-academico-7svu7rbupjvs3astxmjuup.streamlit.app/
+Se uso la APIkey de gemini
 
 ## Características
 - Respuestas basadas en documentos oficiales (Word)

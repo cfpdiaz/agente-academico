@@ -1,5 +1,4 @@
 """Agente RAG para consultas académicas usando Google Gemini."""
-import os
 import numpy as np
 import faiss
 import google.generativeai as genai
@@ -14,7 +13,7 @@ class AcademicAgent:
         self.config = config or Config()
         genai.configure(api_key=self.config.GOOGLE_API_KEY)
         self.model = genai.GenerativeModel(self.config.MODEL_NAME)
-        self.vector_store = None
+        self.index = None
         self.chunks = []
         self.metadata = []
         self.chat_history = []
@@ -26,8 +25,8 @@ class AcademicAgent:
         documents = processor.process_documents("data")
         
         if documents:
-            self.chunks = [doc.page_content for doc in documents]
-            self.metadata = [doc.metadata for doc in documents]
+            self.chunks = [doc["page_content"] for doc in documents]
+            self.metadata = [doc["metadata"] for doc in documents]
             self._create_vector_store()
     
     def _get_embedding(self, text: str) -> List[float]:
@@ -61,7 +60,7 @@ class AcademicAgent:
         scores, indices = self.index.search(query_np, k)
         
         results = []
-        for i, (score, idx) in enumerate(zip(scores[0], indices[0])):
+        for score, idx in zip(scores[0], indices[0]):
             if idx < len(self.chunks):
                 results.append((self.chunks[idx], self.metadata[idx], float(score)))
         
@@ -70,7 +69,7 @@ class AcademicAgent:
     def _build_prompt(self, query: str, context: str) -> str:
         """Construye el prompt para el modelo."""
         history = ""
-        for msg in self.chat_history[-6:]:  # Últimos 3 intercambios
+        for msg in self.chat_history[-6:]:
             role = "Usuario" if msg["role"] == "user" else "Asistente"
             history += f"{role}: {msg['content']}\n"
         
@@ -100,16 +99,14 @@ Respuesta:"""
     
     def query(self, question: str) -> Dict:
         """Procesa una consulta y devuelve la respuesta."""
-        if not self.vector_store and not hasattr(self, 'index'):
+        if self.index is None:
             return {
                 "answer": "El agente no está inicializado. Asegúrate de que los documentos están en la carpeta data/.",
                 "sources": []
             }
         
-        # Recuperar chunks relevantes
         relevant = self._retrieve_relevant(question, k=self.config.TOP_K)
         
-        # Construir contexto
         context_parts = []
         sources = []
         seen_sources = set()
@@ -123,11 +120,8 @@ Respuesta:"""
                 sources.append({"source": source, "category": category})
         
         context = "\n\n".join(context_parts)
-        
-        # Construir prompt
         prompt = self._build_prompt(question, context)
         
-        # Generar respuesta
         try:
             response = self.model.generate_content(
                 prompt,
@@ -140,7 +134,6 @@ Respuesta:"""
         except Exception as e:
             answer = f"Error al generar la respuesta: {str(e)}"
         
-        # Actualizar historial
         self.chat_history.append({"role": "user", "content": question})
         self.chat_history.append({"role": "assistant", "content": answer})
         
@@ -159,11 +152,19 @@ Respuesta:"""
         documents = processor.process_documents(data_dir)
         
         if documents:
-            self.chunks = [doc.page_content for doc in documents]
-            self.metadata = [doc.metadata for doc in documents]
+            self.chunks = [doc["page_content"] for doc in documents]
+            self.metadata = [doc["metadata"] for doc in documents]
             self._create_vector_store()
             return True
         return False
+
+    
+    
+   
+        
+
+  
+        
 
      
               

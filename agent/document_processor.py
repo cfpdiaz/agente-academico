@@ -1,9 +1,7 @@
 """Procesador de documentos Word para extracción de texto."""
 import os
-from typing import List
+from typing import List, Dict
 from docx import Document
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.docstore.document import Document as LangchainDocument
 from .config import Config
 
 class DocumentProcessor:
@@ -11,11 +9,6 @@ class DocumentProcessor:
     
     def __init__(self, config: Config):
         self.config = config
-        self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=config.CHUNK_SIZE,
-            chunk_overlap=config.CHUNK_OVERLAP,
-            separators=["\n\n", "\n", ". ", " ", ""]
-        )
     
     def extract_text_from_docx(self, file_path: str) -> str:
         """Extrae texto de un archivo .docx."""
@@ -34,7 +27,26 @@ class DocumentProcessor:
         
         return "\n".join(text_parts)
     
-    def process_documents(self, data_dir: str = "data") -> List[LangchainDocument]:
+    def chunk_text(self, text: str) -> List[str]:
+        """Divide el texto en chunks de tamaño manejable."""
+        paragraphs = text.split('\n')
+        chunks = []
+        current_chunk = ""
+        
+        for para in paragraphs:
+            if len(current_chunk) + len(para) <= self.config.CHUNK_SIZE:
+                current_chunk += "\n" + para if current_chunk else para
+            else:
+                if current_chunk:
+                    chunks.append(current_chunk.strip())
+                current_chunk = para
+        
+        if current_chunk:
+            chunks.append(current_chunk.strip())
+        
+        return chunks
+    
+    def process_documents(self, data_dir: str = "data") -> List[Dict]:
         """Procesa todos los documentos Word en el directorio data/."""
         documents = []
         
@@ -47,21 +59,20 @@ class DocumentProcessor:
                 )
                 
                 text = self.extract_text_from_docx(file_path)
-                chunks = self.text_splitter.split_text(text)
+                chunks = self.chunk_text(text)
                 
                 for i, chunk in enumerate(chunks):
-                    doc = LangchainDocument(
-                        page_content=chunk,
-                        metadata={
+                    documents.append({
+                        "page_content": chunk,
+                        "metadata": {
                             "source": filename,
                             "category": category_name,
                             "chunk_id": i,
                             "file_path": file_path
                         }
-                    )
-                    documents.append(doc)
+                    })
         
         return documents
 
-       
+      
           

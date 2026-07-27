@@ -122,7 +122,7 @@ if prompt := st.chat_input("Escribe tu consulta aquí..."):
                         "role": "assistant",
                         "content": error_msg
                     })
-        else:
+    else:
         with st.chat_message("assistant"):
             st.error("El agente no está disponible. Recarga la página.")
     
@@ -136,4 +136,14 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+ 
+
+
+
+
+
+
+                       
+                
+  
  

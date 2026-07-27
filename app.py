@@ -122,16 +122,14 @@ if prompt := st.chat_input("Escribe tu consulta aquí..."):
                         "role": "assistant",
                         "content": error_msg
                     })
-    else:
+        else:
+        error_msg = "❌ El agente no está disponible porque no se pudo inicializar. Revisa los errores al inicio de la página."
         with st.chat_message("assistant"):
-            st.error("El agente no está disponible. Recarga la página.")
+            st.error(error_msg)
+        # Guardamos en la memoria del chat para que persista
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": error_msg
+        })
     
     st.rerun()
-
-st.markdown("---")
-st.markdown(
-    "<p style='text-align: center; color: #95a5a6; font-size: 0.8em;'>"
-    "Agente Académico IA - Asistente basado en documentos oficiales"
-    "</p>",
-    unsafe_allow_html=True
-)
